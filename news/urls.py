@@ -6,12 +6,14 @@ from . import views
 
 
 router = DefaultRouter()
-router.register('', views.NewsViewSet, basename='news')
+router.register('news', views.NewsViewSet, basename='news')
+router.register('statuses', views.StatusViewSet, basename='statuses')
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('<int:news_id>/comments/', views.CommentCreateListView.as_view()),
-    path('<int:news_id>/comments/<int:pk>/',
+    path('news/<int:news_id>/comments/', views.CommentCreateListView.as_view()),
+    path('news/<int:news_id>/comments/<int:pk>/',
          views.CommentRetrieveUpdateDestroyView.as_view()),
-
+    path('news/<int:news_id>/<str:slug>/', views.NewsPostStatus.as_view()),
+    path('news/<int:news_id>/comments/<int:comment_id>/<str:slug>/', views.CommentPostStatus.as_view()),
 ]
