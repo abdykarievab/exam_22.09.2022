@@ -10,10 +10,16 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 
 from .models import News, Comment, Status, NewsStatus, CommentStatus
-from .serializers import NewsSerializer, CommentSerializer
+from .serializers import NewsSerializer, CommentSerializer, StatusSerializer
 from account.models import Author
 from .permissions import NewsPermission, CommentPermission
 
+
+class StatusViewSet(ModelViewSet):
+    queryset = Status.objects.all()
+    serializer_class = StatusSerializer
+    permission_classes = [IsAdminUser, ]
+    authentication_classes = [TokenAuthentication, SessionAuthentication]
 
 class NewsViewSet(ModelViewSet):
     queryset = News.objects.all()
@@ -47,5 +53,43 @@ class CommentRetrieveUpdateDestroyView(CommentView, RetrieveUpdateDestroyAPIView
     authentication_classes = (TokenAuthentication, SessionAuthentication)
 
 
+class NewsPostStatus(APIView):
+    model = NewsStatus
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (TokenAuthentication, SessionAuthentication)
+
+    def get(self, request, news_id, slug):
+        news = get_object_or_404(News, id=news_id)
+        status = get_object_or_404(Status, slug=slug)
+        try:
+            self.model.objects.create(
+                news=news,
+                author=request.user.author,
+                status=status
+            )
+        except IntegrityError:
+            return Response({'error': 'You already added status'})
+        else:
+            return Response({'message': 'Status added'})
+
+
+class CommentPostStatus(APIView):
+    model = CommentStatus
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (TokenAuthentication, SessionAuthentication)
+
+    def get(self, request, news_id, comment_id, slug):
+        comment = get_object_or_404(Comment, id=comment_id, news__id=news_id)
+        status = get_object_or_404(Status, slug=slug)
+        try:
+            self.model.objects.create(
+                comment=comment,
+                author=request.user.author,
+                status=status
+            )
+        except IntegrityError:
+            return Response({'error': 'You already added status'})
+        else:
+            return Response({'message': 'Status added'})
 
 
